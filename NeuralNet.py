@@ -8,9 +8,11 @@ class NeuralNet:
     learn = 0
     w1 = None
     b1 = None
+    z1 = None
+
     w2 = None
     b2 = None
-
+    z2 = None
     def __init__(self,input_layer,hidden_layer, output_layer,train_data,train_label,learn):
         self.input_layer = input_layer
         self.hidden_layer = hidden_layer
@@ -20,12 +22,12 @@ class NeuralNet:
         self.learn = learn
 
         #w1 is hidden_layer by input_layer
-        w1 = np.random.rand(hidden_layer,input_layer)
-        w2 = np.random.rand(output_layer,hidden_layer)
+        self.w1 = np.random.rand(hidden_layer,input_layer)
+        self.w2 = np.random.rand(output_layer,hidden_layer)
 
         #b1 is hidden_layer by 1
-        b1 = np.random.rand(hidden_layer,1)
-        b2 = np.random.rand(output_layer,1)
+        self.b1 = np.random.rand(hidden_layer,1)
+        self.b2 = np.random.rand(output_layer,1)
 
     def gradient_descent(self,epochs):
         for i in range(epochs):
@@ -34,24 +36,34 @@ class NeuralNet:
 
     def forward_prop(self):
         #hidden by input times input by m is hidden by m
-        z1 = np.dot(self.w1,self.train_data) + self.b1
-        a1 = np.tanh(z1) #dimensions are hidden by m
+        self.z1 = np.dot(self.w1,self.train_data) + self.b1
+        a1 = self.relu(self.z1) #dimensions are hidden by m
 
         #output by hidden times hidden by m is output by m
-        z2 = np.dot(self.w2,a1)+self.b2
-        a2 = self.sigmoid(z2)
+        self.z2 = np.dot(self.w2,a1)+self.b2
+        a2 = self.sigmoid(self.z2)
         return a2 #dimensions are output by m
 
-    def back_prop(self,a,z1):
+    def relu(self,z):
+        z[z<0] = 0
+        return z
+
+    def relu_derivative(self,z):
+        z[z>=0] = 1
+        z[z<0] = 0
+        return z
+
+    def back_prop(self,a):
         #output by m - output by 1 is output by m
         dz2 = a-self.train_label
+        print("loss: "+str(np.average(np.power(dz2,2))))
         #output by m times m by output is output by output
         dw2 = np.dot(dz2,np.transpose(a))/self.train_data.shape[1]
         #1 by output
         db2 = np.sum(dz2,axis=1,keepdims=True)/self.train_data.shape[1]  #sums columns
 
         #hidden by output times output by m is hidden by m
-        dz1 = np.multiply(np.dot(np.transpose(self.w2), dz2),1-np.multiply(z1,z1))
+        dz1 = np.multiply(np.dot(np.transpose(self.w2), dz2),self.relu_derivative(self.z1))
         #hidden by m times m by input is hidden by input
         dw1 = np.dot(dz1,np.transpose(self.train_data))/self.train_data.shape[1]
         #dimensions are 1 by input
