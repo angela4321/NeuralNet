@@ -28,7 +28,7 @@ data = np.divide(data,sigma)
 labels = np.array(labels)
 labels = np.expand_dims(labels,axis=0)
 
-layers = [13,500,1]
-net =  NeuralNet(layers,data,labels,0.2)
+layers = [13,200,100,300,100,1]
+net =  NeuralNet(layers,data,labels,0.0003)
 
-net.gradient_descent(100)
+net.gradient_descent(500)
