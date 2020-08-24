@@ -22,8 +22,8 @@ class NeuralNet:
         self.learn = learn
 
         #w1 is hidden_layer by input_layer
-        self.w1 = np.random.rand(hidden_layer,input_layer)
-        self.w2 = np.random.rand(output_layer,hidden_layer)
+        self.w1 = np.random.rand(hidden_layer,input_layer)/100
+        self.w2 = np.random.rand(output_layer,hidden_layer)/100
 
         #b1 is hidden_layer by 1
         self.b1 = np.random.rand(hidden_layer,1)
@@ -38,6 +38,8 @@ class NeuralNet:
         #hidden by input times input by m is hidden by m
         self.z1 = np.dot(self.w1,self.train_data) + self.b1
         a1 = self.relu(self.z1) #dimensions are hidden by m
+        dropout = np.random.rand(a1.shape[0],a1.shape[1])<0.8
+        a1 = np.multiply(a1,dropout)/0.8
 
         #output by hidden times hidden by m is output by m
         self.z2 = np.dot(self.w2,a1)+self.b2

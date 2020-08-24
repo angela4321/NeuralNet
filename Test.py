@@ -16,8 +16,17 @@ with open("/Users/angela/Downloads/heart.csv") as file:
 
 data = np.array(data)
 data = data.transpose()
+
+#normalization
+mean = np.expand_dims(np.sum(data,axis=1)/data.shape[1],axis=1)
+data = np.subtract(data,mean)
+
+sigma = np.expand_dims(np.std(data,axis=1),axis=1)
+data = np.divide(data,sigma)
+
+
 labels = np.array(labels)
 labels = np.expand_dims(labels,axis=0)
-net =  NeuralNet(13,50,1,data,labels,0.03)
+net =  NeuralNet(13,500,1,data,labels,0.2)
 
 net.gradient_descent(100)
