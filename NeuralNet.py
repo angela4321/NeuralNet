@@ -7,6 +7,9 @@ class NeuralNet:
     train_data = None
     train_label = None
 
+    val_data = None
+    val_label = None
+
     learn = 0
 
     w = [] #array of w for every layer
@@ -14,12 +17,15 @@ class NeuralNet:
     z = []
     a = []
 
-    c = []
+    c = []  #training loss
+    v = []  #validation loss
 
-    def __init__(self,layers,train_data,train_label,learn):
+    def __init__(self,layers,train_data,train_label,val_data,val_label,learn):
         self.layers = layers
         self.train_data = train_data
         self.train_label = train_label
+        self.val_data = val_data
+        self.val_label = val_label
         self.learn = learn
 
         self.w.append(None)
@@ -46,9 +52,27 @@ class NeuralNet:
                 da = self.back_prop(prev_da,len(self.layers)-1-j)
                 prev_da = da
             # print("loss: "+str(self.cost()))
-            self.c.append(self.cost())
+            self.c.append(self.cost(self.train_label,self.a[len(self.a)-1]))
+            prev_a = self.val_data
+            for j in range(len(self.layers)-1):
+                prev_a = self.val_prediction(prev_a,j+1)
+            self.v.append(self.cost(self.val_label,prev_a))
 
 
+    def val_prediction(self,a_prev,layer_num):
+        if layer_num != len(self.layers) - 1:
+            # next by current times current by m is next by m
+            z = np.dot(self.w[layer_num], a_prev) + self.b[layer_num]
+            a = self.relu(z)  # dimensions are next by m
+
+        else:
+            # next by current times current by m is next by m
+            z= np.dot(self.w[layer_num], a_prev) + self.b[layer_num]
+            a = special.expit(z)
+            np.nan_to_num(a)
+            a[a == 0] = 0.00000000000001
+            a[a == 1] = 0.99999999999999
+        return a
 
     def forward_prop(self,layer_num):
         if layer_num!=len(self.layers)-1:
@@ -78,10 +102,10 @@ class NeuralNet:
         z[z<0] = 0
         return z
 
-    def cost(self):
-        temp1 = (1-self.train_label)*np.log(1-self.a[len(self.a)-1])
-        temp2 = (self.train_label)*np.log(self.a[len(self.a)-1])
-        return -1*np.sum(temp1+temp2)/self.train_data.shape[1]
+    def cost(self,label, predict):
+        temp1 = (1-label)*np.log(1-predict)
+        temp2 = (label)*np.log(predict)
+        return -1*np.sum(temp1+temp2)/label.shape[1]
 
     def relu_derivative(self,z):
         z[z>=0] = 1
