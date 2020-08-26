@@ -1,5 +1,6 @@
 import csv
 import numpy as np
+from matplotlib import pyplot as plt
 from NeuralNet import NeuralNet
 
 data = []
@@ -27,8 +28,12 @@ data = np.divide(data,sigma)
 
 labels = np.array(labels)
 labels = np.expand_dims(labels,axis=0)
+print(labels)
 
-layers = [13,50,52,1]
-net =  NeuralNet(layers,data,labels,.03)
+layers = [13,200,100,50,20,1]
+net =  NeuralNet(layers,data,labels,0.05)
 
-net.gradient_descent(50)
+net.gradient_descent(20)
+
+plt.plot(net.c)
+plt.show()
