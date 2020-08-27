@@ -20,7 +20,6 @@ data = data.transpose()
 
 labels = data[13:]
 data = data[0:13,]
-print(labels)
 
 #normalization
 mean = np.expand_dims(np.sum(data,axis=1)/data.shape[1],axis=1)
@@ -38,11 +37,12 @@ labels_train = labels[:,:230]
 labels_val = labels[:,230:]
 
 layers = [13,100,50,20,1]
-net =  NeuralNet(layers,data_train,labels_train,data_val,labels_val,0.03)
+net =  NeuralNet(layers,data_train,labels_train,data_val,labels_val,0.05)
 
-net.gradient_descent(200)
+net.gradient_descent(500)
 
 plt.plot(net.c,label = "training")
 plt.plot(net.v,label = "validation")
+
 plt.legend()
 plt.show()

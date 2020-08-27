@@ -33,12 +33,12 @@ class NeuralNet:
         self.z.append(None)
         self.a.append(None)
         for i in range(len(layers)-1):
-            self.w.append(np.random.rand(layers[i+1],layers[i]).astype(np.longdouble)/100)
+            self.w.append(np.random.rand(layers[i+1],layers[i]).astype(np.longdouble)/10)
 
 
-            self.b.append(np.random.rand(layers[i+1],1).astype(np.longdouble))
-            self.z.append(np.random.rand(1,1))
-            self.a.append(np.random.rand(1,1))
+            self.b.append(np.zeros((layers[i+1],1)).astype(np.longdouble))
+            self.z.append(None)
+            self.a.append(None)
         self.a[0] = train_data
 
 
@@ -53,29 +53,12 @@ class NeuralNet:
                 prev_a = self.val_prediction(prev_a, j + 1)
             self.v.append(self.cost(self.val_label, prev_a))
 
-            prev_da = -self.train_label/self.a[len(self.a)-1]
-            prev_da = prev_da+(1-self.train_label)/(1-self.a[len(self.a)-1])
+            prev_da = -np.divide(self.train_label,self.a[len(self.a)-1])
+            prev_da = prev_da+np.divide((1-self.train_label),(1-self.a[len(self.a)-1]))
             for j in range(len(self.layers)-1):
                 da = self.back_prop(prev_da,len(self.layers)-1-j)
                 prev_da = da
             # print("loss: "+str(self.cost()))
-
-
-
-    def val_prediction(self,a_prev,layer_num):
-        if layer_num != len(self.layers) - 1:
-            # next by current times current by m is next by m
-            z = np.dot(self.w[layer_num], a_prev) + self.b[layer_num]
-            a = self.relu(z)  # dimensions are next by m
-
-        else:
-            # next by current times current by m is next by m
-            z= np.dot(self.w[layer_num], a_prev) + self.b[layer_num]
-            a = special.expit(z)
-        a = np.nan_to_num(a)
-        a[a == 0] = 0.0000000000000000001
-        a[a == 1] = 0.9999999999999999999
-        return a
 
     def forward_prop(self,layer_num):
         if layer_num!=len(self.layers)-1:
@@ -99,6 +82,49 @@ class NeuralNet:
         # print("a")
         # print(self.a[layer_num])
 
+    def back_prop(self, da, layer_num):
+        dz = None
+        if (layer_num == len(self.layers) - 1):
+            dz = np.multiply(da, self.sigmoid_derivative(self.z[layer_num]))
+
+        else:
+
+            dz = np.multiply(da, self.relu_derivative(self.z[layer_num]))
+
+        dz[dz == inf] = 999999999999999999999999
+        dw = np.dot(dz, np.transpose(self.a[layer_num - 1])) / self.train_data.shape[1]
+
+        db = np.sum(dz, axis=1, keepdims=True) / self.train_data.shape[1]
+
+        temp = np.dot(np.transpose(self.w[layer_num]), dz)
+
+        self.w[layer_num] = self.w[layer_num] - dw * self.learn
+        self.b[layer_num] = self.b[layer_num] - db * self.learn
+
+        # print("dz")
+        # print(dz)
+        # print("dw")
+        # print(dw)
+        # print("db")
+        # print(db)
+        return temp
+
+    def val_prediction(self,a_prev,layer_num):
+        if layer_num != len(self.layers) - 1:
+            # next by current times current by m is next by m
+            z = np.dot(self.w[layer_num], a_prev) + self.b[layer_num]
+            a = self.relu(z)  # dimensions are next by m
+
+        else:
+            # next by current times current by m is next by m
+            z= np.dot(self.w[layer_num], a_prev) + self.b[layer_num]
+            a = special.expit(z)
+        a = np.nan_to_num(a)
+        a[a == 0] = 0.0000000000000000001
+        a[a == 1] = 0.9999999999999999999
+        return a
+
+
 
 
     def relu(self,z):
@@ -106,47 +132,26 @@ class NeuralNet:
         rel[rel<0] = 0
         return rel
 
-    def cost(self,label, predict):
-        # temp1 = np.multiply((1-label),np.log(1-predict))
-        # temp2 = np.multiply((label),np.log(predict))
-        # return -1*np.sum(temp1+temp2)/label.shape[1]
-        pred2 = np.copy(predict)
-        pred2[pred2>0.5] = 1
-        pred2[pred2<=0.5] = 0
-        return np.sum(np.abs(pred2-label))
-
     def relu_derivative(self,z):
         der = np.copy(z)
         der[der>0] = 1
         der[der<=0] = 0
         return der
 
-    def sigmoid_derivative(self,z):
+    def sigmoid_derivative(self, z):
         temp = special.expit(z)
-        return temp*(1-temp)
+        return temp * (1 - temp)
 
-    def back_prop(self,da,layer_num):
-        dz = None
-        if(layer_num==len(self.layers)-1):
-            dz = np.multiply(da,self.sigmoid_derivative(self.z[layer_num]))
-
-        else:
-
-            dz = np.multiply(da,self.relu_derivative(self.z[layer_num]))
-
-
-        dz[dz==inf] = 999999999999999999999999
-        dw = np.dot(dz,np.transpose(self.a[layer_num-1]))/self.train_data.shape[1]
-
-        db = np.sum(dz,axis=1,keepdims=True)/self.train_data.shape[1]
+    def cost(self,label, predict):
+        temp1 = np.multiply((1-label),np.log(1-predict))
+        temp2 = np.multiply((label),np.log(predict))
+        return -1*np.sum(temp1+temp2)/label.shape[1]
+        # pred2 = np.copy(predict)
+        # pred2[pred2>0.5] = 1
+        # pred2[pred2<=0.5] = 0
+        # return np.sum(np.abs(pred2-label))
 
 
-        self.w[layer_num] = self.w[layer_num] - dw*self.learn
-        self.b[layer_num] = self.b[layer_num] - db*self.learn
-        # print("dz")
-        # print(dz)
-        # print("dw")
-        # print(dw)
-        # print("db")
-        # print(db)
-        return np.dot(np.transpose(self.w[layer_num]),dz)
+
+
+
