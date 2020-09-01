@@ -36,13 +36,12 @@ data_val = data[:,230:]
 labels_train = labels[:,:230]
 labels_val = labels[:,230:]
 
-layers = [13,100,50,20,1]
-net =  NeuralNet(layers,data_train,labels_train,data_val,labels_val,0.05)
+layers = [13,75,50,20,1]
+net =  NeuralNet(layers,data_train,labels_train,data_val,labels_val,0.0005)
 
-net.gradient_descent(500)
+net.gradient_descent(300)
 
 plt.plot(net.c,label = "training")
 plt.plot(net.v,label = "validation")
-
 plt.legend()
 plt.show()
