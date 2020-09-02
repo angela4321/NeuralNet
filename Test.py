@@ -2,6 +2,8 @@ import csv
 import numpy as np
 from matplotlib import pyplot as plt
 from NeuralNet import NeuralNet
+from Relu import Relu
+from Logistic import Logistic
 
 data = []
 labels = []
@@ -37,7 +39,8 @@ labels_train = labels[:,:230]
 labels_val = labels[:,230:]
 
 layers = [13,75,50,20,1]
-net =  NeuralNet(layers,data_train,labels_train,data_val,labels_val,0.0005,batch = 16)
+layer_type = [Relu(),Relu(),Relu(),Relu(),Logistic()]
+net =  NeuralNet(layers,layer_type,data_train,labels_train,data_val,labels_val,0.0005,batch = 16)
 
 net.gradient_descent(100)
 

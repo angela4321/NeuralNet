@@ -4,8 +4,9 @@ from numpy import inf
 import math
 class NeuralNet:
 
-    def __init__(self,layers,train_data,train_label,val_data,val_label,learn,b1=0.9,b2 = 0.99,batch = 0):
+    def __init__(self,layers,layer_type,train_data,train_label,val_data,val_label,learn,b1=0.9,b2 = 0.99,batch = 0):
         self.layers = layers
+        self.layer_type = layer_type
         self.train_data = train_data
         self.train_label = train_label
         self.val_data = val_data
@@ -80,25 +81,17 @@ class NeuralNet:
             prev_a = self.train_data
             for j in range(len(self.layers) - 1):
                 prev_a = self.predict(prev_a, j + 1)
-            self.c.append(self.cost(self.train_label, prev_a))
+            self.c.append(self.layer_type[len(self.layer_type)-1].cost(self.train_label, prev_a))
 
             #calculate cost for validation set
             prev_a = self.val_data
             for j in range(len(self.layers) - 1):
                 prev_a = self.predict(prev_a, j + 1)
-            self.v.append(self.cost(self.val_label, prev_a))
+            self.v.append(self.layer_type[len(self.layer_type)-1].cost(self.val_label, prev_a))
 
     def forward_prop(self,layer_num):
-        if layer_num!=len(self.layers)-1:
-            #next by current times current by m is next by m
-            self.z[layer_num] = np.dot(self.w[layer_num],self.a[layer_num-1]) + self.b[layer_num]
-            self.a[layer_num] = self.relu(self.z[layer_num]) #dimensions are next by m
-
-        else:
-            #next by current times current by m is next by m
-            self.z[layer_num] = np.dot(self.w[layer_num],self.a[layer_num-1])+self.b[layer_num]
-            #self.a[layer_num] = self.sigmoid(self.z[layer_num]) #dimensions output by m
-            self.a[layer_num] = special.expit(self.z[layer_num])
+        self.z[layer_num] = np.dot(self.w[layer_num], self.a[layer_num - 1]) + self.b[layer_num]
+        self.a[layer_num] = self.layer_type[layer_num].activation(self.z[layer_num]) #dimensions are next by m
 
         self.a[layer_num] = np.nan_to_num(self.a[layer_num])
         self.a[layer_num][self.a[layer_num]==0] = 0.0000000000000000001
@@ -107,14 +100,7 @@ class NeuralNet:
 
 
     def back_prop(self, da, layer_num):
-        dz = None
-        if (layer_num == len(self.layers) - 1):
-            dz = np.multiply(da, self.sigmoid_derivative(self.z[layer_num]))
-
-        else:
-
-            dz = np.multiply(da, self.relu_derivative(self.z[layer_num]))
-
+        dz=np.multiply(da, self.layer_type[layer_num].derivative(self.z[layer_num]))
         dz[dz == inf] = 999999999999999999999999
         dw = np.dot(dz, np.transpose(self.a[layer_num - 1])) / self.train_data.shape[1]
 
@@ -146,47 +132,13 @@ class NeuralNet:
 
 
     def predict(self,a_prev,layer_num):
-        if layer_num != len(self.layers) - 1:
-            # next by current times current by m is next by m
-            z = np.dot(self.w[layer_num], a_prev) + self.b[layer_num]
-            a = self.relu(z)  # dimensions are next by m
 
-        else:
-            # next by current times current by m is next by m
-            z= np.dot(self.w[layer_num], a_prev) + self.b[layer_num]
-            a = special.expit(z)
+        z = np.dot(self.w[layer_num], a_prev) + self.b[layer_num]
+        a = self.layer_type[layer_num].activation(z)  # dimensions are next by m
         a = np.nan_to_num(a)
         a[a == 0] = 0.0000000000000000001
         a[a == 1] = 0.9999999999999999999
         return a
-
-
-
-
-    def relu(self,z):
-        rel = np.copy(z)
-        rel[rel<0] = 0
-        return rel
-
-    def relu_derivative(self,z):
-        der = np.copy(z)
-        der[der>0] = 1
-        der[der<=0] = 0
-        return der
-
-    def sigmoid_derivative(self, z):
-        temp = special.expit(z)
-        return temp * (1 - temp)
-
-    def cost(self,label, predict):
-        temp1 = np.multiply((1-label),np.log(1-predict))
-        temp2 = np.multiply((label),np.log(predict))
-        return -1*np.sum(temp1+temp2)/label.shape[1]
-        # pred2 = np.copy(predict)
-        # pred2[pred2>0.5] = 1
-        # pred2[pred2<=0.5] = 0
-        # return np.sum(np.abs(pred2-label))/label.shape[1]
-
 
 
 
