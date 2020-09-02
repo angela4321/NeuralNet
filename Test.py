@@ -37,9 +37,9 @@ labels_train = labels[:,:230]
 labels_val = labels[:,230:]
 
 layers = [13,75,50,20,1]
-net =  NeuralNet(layers,data_train,labels_train,data_val,labels_val,0.0005)
+net =  NeuralNet(layers,data_train,labels_train,data_val,labels_val,0.0005,batch = 16)
 
-net.gradient_descent(300)
+net.gradient_descent(100)
 
 plt.plot(net.c,label = "training")
 plt.plot(net.v,label = "validation")

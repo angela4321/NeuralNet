@@ -1,9 +1,10 @@
 import numpy as np
 from scipy import special
 from numpy import inf
+import math
 class NeuralNet:
 
-    def __init__(self,layers,train_data,train_label,val_data,val_label,learn,b1=0.9,b2 = 0.99):
+    def __init__(self,layers,train_data,train_label,val_data,val_label,learn,b1=0.9,b2 = 0.99,batch = 0):
         self.layers = layers
         self.train_data = train_data
         self.train_label = train_label
@@ -12,6 +13,9 @@ class NeuralNet:
         self.learn = learn
         self.b1=b1
         self.b2=b2
+        self.batch = batch
+        if batch==0:
+            self.batch = train_data.shape[1]
 
         self.w = []
         self.b = []
@@ -49,26 +53,40 @@ class NeuralNet:
 
 
     def gradient_descent(self,epochs):
-        for self.i in range(epochs):
-            #forward prop
-            for j in range(len(self.layers)-1):
-                self.forward_prop(j+1)
+        for i in range(epochs):
+            for self.j in range(math.floor(self.train_data.shape[1]/self.batch)):
+                #make mini batches
+                end = 0
+                if (self.j+1)*self.batch>self.train_data.shape[1]:
+                    end = self.train_data.shape[1]
+                else:
+                    end = (self.j+1)*self.batch
+                self.a[0] = self.train_data[:,self.j*self.batch:end]
 
-            self.c.append(self.cost(self.train_label, self.a[len(self.a) - 1]))
+                #forward prop
+                for j in range(len(self.layers)-1):
+                    self.forward_prop(j+1)
+
+                # back prop
+                temp_label = self.train_label[:, self.j * self.batch:self.j * self.batch + self.a[0].shape[1]]
+                prev_da = -np.divide(temp_label, self.a[len(self.a) - 1])
+                prev_da = prev_da + np.divide((1 - temp_label), (1 - self.a[len(self.a) - 1]))
+                for j in range(len(self.layers) - 1):
+                    da = self.back_prop(prev_da, len(self.layers) - 1 - j)
+                    prev_da = da
+                # print("loss: "+str(self.cost()))
+
+            #calculate cost for training
+            prev_a = self.train_data
+            for j in range(len(self.layers) - 1):
+                prev_a = self.predict(prev_a, j + 1)
+            self.c.append(self.cost(self.train_label, prev_a))
 
             #calculate cost for validation set
             prev_a = self.val_data
             for j in range(len(self.layers) - 1):
-                prev_a = self.val_prediction(prev_a, j + 1)
+                prev_a = self.predict(prev_a, j + 1)
             self.v.append(self.cost(self.val_label, prev_a))
-
-            #back prop
-            prev_da = -np.divide(self.train_label,self.a[len(self.a)-1])
-            prev_da = prev_da+np.divide((1-self.train_label),(1-self.a[len(self.a)-1]))
-            for j in range(len(self.layers)-1):
-                da = self.back_prop(prev_da,len(self.layers)-1-j)
-                prev_da = da
-            # print("loss: "+str(self.cost()))
 
     def forward_prop(self,layer_num):
         if layer_num!=len(self.layers)-1:
@@ -111,23 +129,23 @@ class NeuralNet:
 
     def adam(self,layer_num,dw,db):
         self.vdw[layer_num] = (self.b1) * self.vdw[layer_num] + (1 - self.b1) * dw
-        vdwc = self.vdw[layer_num] / (1 - pow(self.b1, self.i + 1))
+        vdwc = self.vdw[layer_num] / (1 - pow(self.b1, self.j + 1))
 
         self.vdb[layer_num] = self.b1 * self.vdb[layer_num] + (1 - self.b1) * db
-        vdbc = self.vdb[layer_num] / (1 - pow(self.b1, self.i + 1))
+        vdbc = self.vdb[layer_num] / (1 - pow(self.b1, self.j + 1))
 
         self.sdw[layer_num] = self.b2 * self.sdw[layer_num] + (1 - self.b2) * np.power(dw, 2)
-        sdwc = self.sdw[layer_num] / (1 - pow(self.b2, self.i + 1))
+        sdwc = self.sdw[layer_num] / (1 - pow(self.b2, self.j + 1))
 
         self.sdb[layer_num] = self.b2 * self.sdb[layer_num] + (1 - self.b2) * np.power(db, 2)
-        sdbc = self.sdb[layer_num] / (1 - pow(self.b2, self.i + 1))
+        sdbc = self.sdb[layer_num] / (1 - pow(self.b2, self.j + 1))
 
         # update weights
         self.w[layer_num] = self.w[layer_num] - self.learn * vdwc / (np.sqrt(sdwc) + 10 ** -8)
         self.b[layer_num] = self.b[layer_num] - self.learn * vdbc / (np.sqrt(sdbc) + 10 ** -8)
 
 
-    def val_prediction(self,a_prev,layer_num):
+    def predict(self,a_prev,layer_num):
         if layer_num != len(self.layers) - 1:
             # next by current times current by m is next by m
             z = np.dot(self.w[layer_num], a_prev) + self.b[layer_num]
