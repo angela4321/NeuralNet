@@ -9,13 +9,18 @@ class Logistic(Layer):
         temp2 = np.multiply((label), np.log(predict))
         return -1 * np.sum(temp1 + temp2) / label.shape[1]
 
+        # pred = np.copy(predict)
+        # pred[pred>0.5]=1
+        # pred[pred<=0.5] = 0
+        # return np.sum(np.abs(label-pred))
+
     def forward_prop(self, prev_a):
         self.z = np.dot(self.w, prev_a) + self.b
         self.a = self.activation(self.z)  # dimensions are next by m
         self.a = np.nan_to_num(self.a)
-        self.a[self.a == 0] = 0.0000000000000000001
-        self.a[self.a == 1] = 0.9999999999999999999
-        self.z[self.z == inf] = 9999999999999999999
+        # self.a[self.a == 0] = 0.0000000000000000001
+        # self.a[self.a == 1] = 0.9999999999999999999
+        # self.z[self.z == inf] = 9999999999999999999
         return self.a
 
     def backward_prop(self, da,prev_a,m,iteration):

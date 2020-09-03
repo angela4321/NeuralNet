@@ -12,9 +12,9 @@ class Relu(Layer):
         self.a = self.activation(self.z)  # dimensions are next by m
         return self.a
         self.a = np.nan_to_num(self.a)
-        self.a[self.a == 0] = 0.0000000000000000001
-        self.a[self.a == 1] = 0.9999999999999999999
-        self.z[self.z == inf] = 9999999999999999999
+        # self.a[self.a == 0] = 0.0000000000000000001
+        # self.a[self.a == 1] = 0.9999999999999999999
+        # self.z[self.z == inf] = 9999999999999999999
 
     def activation(self,z):
         rel = np.copy(z)

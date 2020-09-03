@@ -1,7 +1,7 @@
 import numpy as np
 class Layer:
 
-    def initialize_vars(self,w=None,b=None,z=None,a=None,vdw=None,vdb=None,sdw=None,sdb=None,b1=0.9,b2=0.99,learn = 0.0005):
+    def initialize_vars(self,w=None,b=None,z=None,a=None,vdw=None,vdb=None,sdw=None,sdb=None,b1=0.9,b2=0.99,learn = 0.005):
         self.w=w
         self.b=b
         self.z=z

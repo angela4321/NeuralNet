@@ -15,7 +15,7 @@ path = "/Users/angela/Downloads/kagglecatsanddogs_3367a/PetImages/Cat"
 i = 0
 for f in os.listdir(path):
     i+=1
-    if i>20:
+    if i>50:
         break
     if os.path.splitext(f)[1] == ".jpg":
         try:
@@ -27,12 +27,12 @@ for f in os.listdir(path):
 path = "/Users/angela/Downloads/kagglecatsanddogs_3367a/PetImages/Dog"
 for f in os.listdir(path):
     i+=1
-    if i>40:
+    if i>100:
         break
     if os.path.splitext(f)[1] == ".jpg":
         try:
             im = np.asarray(Image.open(os.path.join(path, f)).resize((50,50)))
-            files.append([im, 0])
+            files.append([im, 1])
         except ValueError:
             i-=1
             print("here")
@@ -56,18 +56,20 @@ data = data/100
 #
 
 
-data_train = data[:,:,:,:30]
-data_val = data[:,:,:,30:]
+data_train = data[:70,:,:,:]
+data_val = data[70:,:,:,:]
 labels = np.expand_dims(labels,axis=0)
-labels_train = labels[:,:30]
-labels_val = labels[:,30:]
+labels_train = labels[:,:70]
+labels_val = labels[:,70:]
 
 layers = [0,-1,50,1]
 layer_type = [CNN(), CNN(),Relu(),Logistic()]
-net =  NeuralNet(layers,layer_type,data_train,labels_train,data_val,labels_val,0.0005,data_train.shape[0],batch = 16)
+net =  NeuralNet(layers,layer_type,data_train,labels_train,data_val,labels_val,0.000005,data_train.shape[0],batch = 16)
 
-net.gradient_descent(5)
+net.gradient_descent(10)
 
+print(net.c)
+print(net.v)
 plt.plot(net.c,label = "training")
 plt.plot(net.v,label = "validation")
 plt.legend()

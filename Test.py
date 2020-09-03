@@ -35,6 +35,7 @@ data = np.divide(data,sigma)
 data_train = data[:,:230]
 data_val = data[:,230:]
 
+
 labels_train = labels[:,:230]
 labels_val = labels[:,230:]
 

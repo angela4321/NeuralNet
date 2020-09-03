@@ -9,27 +9,18 @@ class CNN(Layer):
 
 
     def forward_prop(self,a):
-        print("here")
-        print(a.shape)
         z = np.zeros((a.shape[0],a.shape[1]-2,a.shape[2]-2,a.shape[3]))
         for i in range(a.shape[0]): #iterate over num training
             for f in range(a.shape[3]):  # iterate over filters
                 for r in range(z.shape[1]):
                     for c in range(z.shape[2]):
                         step_a = a[i,r:r+self.w.shape[0],c:c+self.w.shape[0],:]
-                        # print(c)
-                        # print(c+self.w.shape[0])
-                        # print(step_a.shape)
-                        # print(self.w[:][:][:][f].shape)
-                        # print(self.b[:][:][:][f].shape)
                         z[i,r,c,f]=np.sum(np.multiply(step_a, self.w[:,:,:,f])) + self.b[:,:,:,f]
         self.a = self.relu(z)
         return self.a
 
     def backward_prop(self,prev_da,prev_a,m,iteration):
         dz = self.relu_derivative(prev_da)
-        print(m)
-        print(dz.shape)
         da = np.zeros(prev_a.shape)
         dw = np.zeros(self.w.shape)
         db = np.zeros((1,1,1,self.w.shape[3]))
