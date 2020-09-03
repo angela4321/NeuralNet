@@ -9,6 +9,9 @@ from Relu import Relu
 from Logistic import Logistic
 from CNN import CNN
 
+
+
+print("here")
 files = []
 labels = []
 path = "/Users/angela/Downloads/kagglecatsanddogs_3367a/PetImages/Cat"
