@@ -1,10 +1,9 @@
 import numpy as np
-from scipy import special
-from numpy import inf
+from CNN import CNN
 import math
 class NeuralNet:
 
-    def __init__(self,layers,layer_type,train_data,train_label,val_data,val_label,learn,b1=0.9,b2 = 0.99,batch = 0):
+    def __init__(self,layers,layer_type,train_data,train_label,val_data,val_label,learn,m,b1=0.9,b2 = 0.99,batch = 0):
         self.layers = layers
         self.layer_type = layer_type
         self.train_data = train_data
@@ -15,80 +14,75 @@ class NeuralNet:
         self.b1=b1
         self.b2=b2
         self.batch = batch
+        self.m=m #num training examples
         if batch==0:
-            self.batch = train_data.shape[1]
+            self.batch =m
 
-        # self.w = []
-        # self.b = []
-        # self.z = []
-        # self.a = []
 
         self.c = []
         self.v = []
+        # [0, -1, -2, 50, 1]
 
-        # self.vdw = []
-        # self.vdb = []
-        #
-        # self.sdw = []
-        # self.sdb = []
-
-
-        # self.w.append(None)
-        # self.b.append(None)
-        # self.z.append(None)
-        # self.a.append(None)
-        # self.vdw.append(None)
-        # self.vdb.append(None)
-        # self.sdw.append(None)
-        # self.sdb.append(None)
         for i in range(len(layers)-1):
-            w = np.random.rand(layers[i+1],layers[i]).astype(np.longdouble)/10
-            b = np.zeros((layers[i+1],1)).astype(np.longdouble)
-            z = None
-            a = None
-            vdw = np.zeros((layers[i+1],layers[i]))
-            vdb = np.zeros((layers[i+1],1))
-            sdw = np.zeros((layers[i+1],layers[i]))
-            sdb = np.zeros((layers[i+1],1))
-            self.layer_type[i+1].initialize_vars(w,b,z,a,vdw,vdb,sdw,sdb)
-            # self.w.append(np.random.rand(layers[i+1],layers[i]).astype(np.longdouble)/10)
-            # self.b.append(np.zeros((layers[i+1],1)).astype(np.longdouble))
-            # self.z.append(None)
-            # self.a.append(None)
-            # self.vdw.append(np.zeros((layers[i+1],layers[i])))
-            # self.vdb.append(np.zeros((layers[i+1],1)))
-            # self.sdw.append(np.zeros((layers[i+1],layers[i])))
-            # self.sdb.append(np.zeros((layers[i+1],1)))
+            if layers[i]==-1 and layers[i+1]!=-1: # flatten the CNN
+                layers[i] = (train_data.shape[0])*(train_data.shape[1]-2)*(train_data.shape[2]-2)
+
+            if layers[i+1]==-1: #CNN layer
+                w = np.random.rand(3,3,3,3).astype(np.longdouble)/10000
+                b = np.zeros((1,1,1,3))
+                self.layer_type[i+1].initialize_vars(w=w,b=b)
+            else:
+                w = np.random.rand(layers[i + 1], layers[i]).astype(np.longdouble) / 10
+                b = np.zeros((layers[i + 1], 1)).astype(np.longdouble)
+                z = None
+                a = None
+                vdw = np.zeros((layers[i+1],layers[i]))
+                vdb = np.zeros((layers[i+1],1))
+                sdw = np.zeros((layers[i+1],layers[i]))
+                sdb = np.zeros((layers[i+1],1))
+                self.layer_type[i+1].initialize_vars(w,b,z,a,vdw,vdb,sdw,sdb)
         self.layer_type[0].initialize_vars(train_data)
 
 
     def gradient_descent(self,epochs):
         for i in range(epochs):
-            for self.j in range(math.floor(self.train_data.shape[1]/self.batch)):
+            for self.j in range(math.floor(self.m/self.batch)):
                 #make mini batches
                 end = 0
-                if (self.j+1)*self.batch>self.train_data.shape[1]:
-                    end = self.train_data.shape[1]
+                if (self.j+1)*self.batch>self.m:
+                    end = self.m
                 else:
                     end = (self.j+1)*self.batch
                 self.layer_type[0].a = self.train_data[:,self.j*self.batch:end]
+                if type(self.layer_type[0])==CNN:
+
+                    self.layer_type[0].a = self.train_data[:,:,:,self.j*self.batch:end]
 
                 #forward prop
                 prev_a = self.layer_type[0].a
                 for j in range(len(self.layers)-1):
+                    if type(self.layer_type[j])==CNN and type(self.layer_type[j+1])!=CNN:
+                        prev_a = prev_a.reshape(-1,prev_a.shape[-1])
                     prev_a = self.layer_type[j+1].forward_prop(prev_a)
                     # self.forward_prop(j+1)
 
                 # back prop
                 temp_label = self.train_label[:, self.j * self.batch:self.j * self.batch + prev_a.shape[1]]
                 prev_da = -np.divide(temp_label, prev_a)
+                prev_a[prev_a==1]=0.99999999999
                 prev_da = prev_da + np.divide((1 - temp_label), (1 - prev_a))
+
                 for j in range(len(self.layers) - 1):
                     prev_a = self.layer_type[len(self.layers)-1-j-1].a
-                    self.layer_type[len(self.layers)-1-j].backward_prop(prev_da,prev_a,self.train_data,self.j) #da, preva
-                    # da = self.back_prop(prev_da, len(self.layers) - 1 - j)
-                    # prev_da = da
-                # print("loss: "+str(self.cost()))
+                    if type(self.layer_type[len(self.layers)-1-j-1])==CNN and type(self.layer_type[len(self.layers)-1-j])!=CNN:
+                        prev_a = prev_a.reshape(-1,prev_a.shape[-1])
+
+                    prev_da = self.layer_type[len(self.layers)-1-j].backward_prop(prev_da,prev_a,self.m,self.j) #da, preva
+
+                    if type(self.layer_type[len(self.layers) - 1 - j - 1]) == CNN and type(
+                            self.layer_type[len(self.layers) - 1 - j]) != CNN:
+                        prev_da = prev_da.reshape(self.train_data.shape[0], self.train_data.shape[1] - 2,
+                                                  self.train_data.shape[2] - 2, -1)
 
             #calculate cost for training
             prev_a = self.train_data
@@ -101,48 +95,6 @@ class NeuralNet:
             for j in range(len(self.layers) - 1):
                 prev_a = self.predict(prev_a, j + 1)
             self.v.append(self.layer_type[len(self.layer_type)-1].cost(self.val_label, prev_a))
-
-    # def forward_prop(self,layer_num):
-    #     self.z[layer_num] = np.dot(self.w[layer_num], self.a[layer_num - 1]) + self.b[layer_num]
-    #     self.a[layer_num] = self.layer_type[layer_num].activation(self.z[layer_num]) #dimensions are next by m
-    #
-    #     self.a[layer_num] = np.nan_to_num(self.a[layer_num])
-    #     self.a[layer_num][self.a[layer_num]==0] = 0.0000000000000000001
-    #     self.a[layer_num][self.a[layer_num]==1] = 0.9999999999999999999
-    #     self.z[layer_num][self.z[layer_num] == inf] = 9999999999999999999
-
-
-    # def back_prop(self, da, layer_num):
-    #     dz=np.multiply(da, self.layer_type[layer_num].derivative(self.z[layer_num]))
-    #     dz[dz == inf] = 999999999999999999999999
-    #     dw = np.dot(dz, np.transpose(self.a[layer_num - 1])) / self.train_data.shape[1]
-    #
-    #     db = np.sum(dz, axis=1, keepdims=True) / self.train_data.shape[1]
-    #
-    #     temp = np.dot(np.transpose(self.w[layer_num]), dz)
-    #
-    #     self.adam(layer_num,dw,db)
-    #
-    #
-    #     return temp
-
-    # def adam(self,layer_num,dw,db):
-    #     self.vdw[layer_num] = (self.b1) * self.vdw[layer_num] + (1 - self.b1) * dw
-    #     vdwc = self.vdw[layer_num] / (1 - pow(self.b1, self.j + 1))
-    #
-    #     self.vdb[layer_num] = self.b1 * self.vdb[layer_num] + (1 - self.b1) * db
-    #     vdbc = self.vdb[layer_num] / (1 - pow(self.b1, self.j + 1))
-    #
-    #     self.sdw[layer_num] = self.b2 * self.sdw[layer_num] + (1 - self.b2) * np.power(dw, 2)
-    #     sdwc = self.sdw[layer_num] / (1 - pow(self.b2, self.j + 1))
-    #
-    #     self.sdb[layer_num] = self.b2 * self.sdb[layer_num] + (1 - self.b2) * np.power(db, 2)
-    #     sdbc = self.sdb[layer_num] / (1 - pow(self.b2, self.j + 1))
-    #
-    #     # update weights
-    #     self.w[layer_num] = self.w[layer_num] - self.learn * vdwc / (np.sqrt(sdwc) + 10 ** -8)
-    #     self.b[layer_num] = self.b[layer_num] - self.learn * vdbc / (np.sqrt(sdbc) + 10 ** -8)
-
 
     def predict(self,a_prev,layer_num):
 

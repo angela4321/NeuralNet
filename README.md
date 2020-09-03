@@ -1,5 +1,5 @@
 Builds a neural network from scratch
 
-Following the "Neural Networks and Deep Learning" by deeplearning.ai course on Coursera
+Following the "Deep Learning" specialization by deeplearning.ai on Coursera
 
-The dataset is Heart Disease UCI from Kaggle
+The datasets are Heart Disease UCI from Kaggle and Kaggle Cats and Dogs Dataset from microsoft
