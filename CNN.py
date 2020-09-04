@@ -17,10 +17,14 @@ class CNN(Layer):
                         step_a = a[i,r:r+self.w.shape[0],c:c+self.w.shape[0],:]
                         z[i,r,c,f]=np.sum(np.multiply(step_a, self.w[:,:,:,f])) + self.b[:,:,:,f]
         self.a = self.relu(z)
+        self.z = z
         return self.a
 
     def backward_prop(self,prev_da,prev_a,m,iteration):
-        dz = self.relu_derivative(prev_da)
+
+        dz = np.multiply(prev_da, self.relu_derivative(self.z))
+        # dz = self.relu_derivative(prev_da)
+        # dz = prev_da
         da = np.zeros(prev_a.shape)
         dw = np.zeros(self.w.shape)
         db = np.zeros((1,1,1,self.w.shape[3]))
@@ -33,6 +37,8 @@ class CNN(Layer):
                         temp_a = prev_a[i,r:r+self.w.shape[0],c:c+self.w.shape[0],:]
                         dw[:,:,:,f]+=temp_a*dz[i][r][c][f]
                         db[:,:,:,f]+=dz[i][r][c][f]
+        # print(dw*self.learn)
+        # print(db*self.learn)
         self.w = self.w - self.learn * dw
         self.b = self.b - self.learn * db
         return da
