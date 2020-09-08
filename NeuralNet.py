@@ -22,18 +22,19 @@ class NeuralNet:
         self.c = []
         self.v = []
         # [0, -1, -2, 50, 1]
-
+        self.cnn_shape = train_data.shape
         for i in range(len(layers)-1):
             if layers[i]==-1 and layers[i+1]!=-1: # flatten the CNN
-                layers[i] = (train_data.shape[3])*(train_data.shape[1]-2)*(train_data.shape[2]-2)
-                #layers[i] = 36864
+                layers[i] = (self.cnn_shape[3])*(self.cnn_shape[1])*(self.cnn_shape[2])
+
 
             if layers[i+1]==-1: #CNN layer
-                w = np.random.rand(3,3,3,3).astype(np.longdouble)/10000
+                w = np.random.rand(3,3,3,3).astype(np.longdouble)/100
                 b = np.zeros((1,1,1,3))
                 self.layer_type[i+1].initialize_vars(w=w,b=b,learn = self.learn)
+                self.cnn_shape = (self.cnn_shape[0], (int((self.cnn_shape[1]-2)/2)), (int((self.cnn_shape[1]-2)/2)),self.cnn_shape[3])
             else:
-                w = np.random.rand(layers[i + 1], layers[i]).astype(np.longdouble) / 10000
+                w = np.random.rand(layers[i + 1], layers[i]).astype(np.longdouble) / 10
                 b = np.zeros((layers[i + 1], 1)).astype(np.longdouble)
                 z = None
                 a = None
@@ -41,6 +42,7 @@ class NeuralNet:
                 vdb = np.zeros((layers[i+1],1))
                 sdw = np.zeros((layers[i+1],layers[i]))
                 sdb = np.zeros((layers[i+1],1))
+
                 self.layer_type[i+1].initialize_vars(w,b,z,a,vdw,vdb,sdw,sdb,learn = self.learn)
 
 
@@ -65,7 +67,8 @@ class NeuralNet:
                 prev_a = self.layer_type[0].a
                 for j in range(len(self.layers)-1):
                     if type(self.layer_type[j])==CNN and type(self.layer_type[j+1])!=CNN:
-                        prev_a = prev_a.reshape(-1,prev_a.shape[0])
+                        prev_a = prev_a.reshape(prev_a.shape[0],-1)
+                        prev_a = prev_a.transpose()
 
                     prev_a = self.layer_type[j+1].forward_prop(prev_a)
                     # self.forward_prop(j+1)
@@ -79,14 +82,15 @@ class NeuralNet:
                 for j in range(len(self.layers) - 1):
                     prev_a = self.layer_type[len(self.layers)-1-j-1].a
                     if type(self.layer_type[len(self.layers)-1-j-1])==CNN and type(self.layer_type[len(self.layers)-1-j])!=CNN:
-                        prev_a = prev_a.reshape(-1,prev_a.shape[0])
+                        prev_a = prev_a.reshape(prev_a.shape[0],-1)
+                        prev_a = prev_a.transpose()
 
                     prev_da = self.layer_type[len(self.layers)-1-j].backward_prop(prev_da,prev_a,self.layer_type[0].a.shape[0],self.j) #da, preva
 
                     if type(self.layer_type[len(self.layers) - 1 - j - 1]) == CNN and type(
                             self.layer_type[len(self.layers) - 1 - j]) != CNN:
-                        prev_da = prev_da.reshape(self.layer_type[0].a.shape[0], self.train_data.shape[1] - 2,
-                                                  self.train_data.shape[2] - 2, -1)
+                        prev_da = prev_da.reshape(self.layer_type[0].a.shape[0], self.cnn_shape[1],
+                                                self.cnn_shape[2], -1)
 
             self.cost()
     def cost(self):

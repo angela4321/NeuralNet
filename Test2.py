@@ -15,7 +15,7 @@ path = "/Users/angela/Downloads/kagglecatsanddogs_3367a/PetImages/Cat"
 i = 0
 for f in os.listdir(path):
     i+=1
-    if i>20:
+    if i>100:
         break
     if os.path.splitext(f)[1] == ".jpg":
         try:
@@ -27,7 +27,7 @@ for f in os.listdir(path):
 path = "/Users/angela/Downloads/kagglecatsanddogs_3367a/PetImages/Dog"
 for f in os.listdir(path):
     i+=1
-    if i>40:
+    if i>200:
         break
     if os.path.splitext(f)[1] == ".jpg":
         try:
@@ -44,7 +44,7 @@ for i in files:
     labels.append(i[1])
 
 data = np.array(data)
-data = data/10000
+data = data/100
 #data = np.swapaxes(data,0,3)
 #
 # #normalization
@@ -56,15 +56,16 @@ data = data/10000
 #
 
 
-data_train = data[:30,:,:,:]
-data_val = data[30:,:,:,:]
+data_train = data[:170,:,:,:]
+print(data_train)
+data_val = data[170:,:,:,:]
 labels = np.expand_dims(labels,axis=0)
-labels_train = labels[:,:30]
-labels_val = labels[:,30:]
+labels_train = labels[:,:170]
+labels_val = labels[:,170:]
 
-layers = [0,-1,50,1]
-layer_type = [CNN(), CNN(),Relu(),Logistic()]
-net =  NeuralNet(layers,layer_type,data_train,labels_train,data_val,labels_val,0.00005,data_train.shape[0],batch = 16)
+layers = [0,-1,-1,-1,-1,200,100,1]
+layer_type = [CNN(), CNN(),CNN(),CNN(),CNN(),Relu(),Relu(),Logistic()]
+net =  NeuralNet(layers,layer_type,data_train,labels_train,data_val,labels_val,0.00003,data_train.shape[0],batch = 64)
 
 net.gradient_descent(10)
 
