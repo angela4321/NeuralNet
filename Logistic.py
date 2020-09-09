@@ -18,14 +18,10 @@ class Logistic(Layer):
         self.z = np.dot(self.w, prev_a) + self.b
         self.a = self.activation(self.z)  # dimensions are next by m
         self.a = np.nan_to_num(self.a)
-        # self.a[self.a == 0] = 0.0000000000000000001
-        # self.a[self.a == 1] = 0.9999999999999999999
-        # self.z[self.z == inf] = 9999999999999999999
         return self.a
 
     def backward_prop(self, da,prev_a,m,iteration):
         dz = np.multiply(da, self.derivative(self.z))
-        #dz[dz == inf] = 999999999999999999999999
         dw = np.dot(dz, np.transpose( prev_a)) / m
 
         db = np.sum(dz, axis=1, keepdims=True) / m

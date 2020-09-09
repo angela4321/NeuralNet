@@ -23,7 +23,6 @@ class Relu(Layer):
 
     def backward_prop(self, da,prev_a,m,iteration):
         dz = np.multiply(da, self.derivative(self.z))
-        #dz[dz == inf] = 999999999999999999999999
         dw = np.dot(dz, np.transpose(prev_a)) / m
 
         db = np.sum(dz, axis=1, keepdims=True) /m

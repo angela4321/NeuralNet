@@ -31,7 +31,6 @@ sigma = np.expand_dims(np.std(data,axis=1),axis=1)
 data = np.divide(data,sigma)
 
 
-
 data_train = data[:,:230]
 data_val = data[:,230:]
 
